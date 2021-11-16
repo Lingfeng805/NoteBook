@@ -404,3 +404,121 @@ if __name__ == '__main__':
 
 ## 发布程序
 
+- 当开发好一个Python程序，运行它需要Python解释器；如何将python程序做成 `可执行程序` 发布别人使用。
+  - 可以使用 `PyInstaller` 来制作独立可执行程序。
+
+- 在Windows 上只需要执行下面的命令，即可制作独立exe程序；
+
+  - ```python
+    pyinstaller 要发布的文件名.py --noconsole --hidden-import PySide2.QtXml
+    ```
+
+    - 执行完上述命令后，在当前目录会产生一个名为`dist`的目录。里面有一个名为原文件名的目录，可执行程序在其中。双击exe文件便可启动程序。
+    - `--noconsole`: 指定不要命令行窗口，否则我们的程序运行的时候，还会多一个黑窗口。 但是我建议大家可以先去掉这个参数，等确定运行成功后，再加上参数重新制作exe。因为这个黑窗口可以显示出程序的报错，这样我们容易找到问题的线索。
+    - `--hidden-import PySide2.QtXml` : 参数是因为这个 QtXml库是动态导入，PyInstaller没法分析出来，需要我们告诉它;
+    - 【注】如果是使用**Qt Designer**动态生成的UI文件，别忘记把程序所需要的ui文件拷贝到打包目录中，不然生成的exe文件会报错。因为PyInstaller只能分析出需要哪些代码文件。 而你的程序动态打开的资源文件，比如 图片、excel、ui这些，它是不会帮你打包的。
+
+
+
+### 添加主窗口图标
+
+- 给程序添加一个logo；导入QIcon库
+
+  ```python
+  from PySide2.QtGui import  QIcon
+  
+  app = QApplication([])
+  # 加载 icon
+  app.setWindowIcon(QIcon('logo.png'))    # 在窗口应用初始化程序后加上此代码；
+  ```
+
+  - 【注意】：这些图标png文件，在使用PyInstaller创建可执行程序时，也要**拷贝到程序所在目录**。否则可执行程序运行后不会显示图标。
+
+### 应用程序图标
+
+- 在PyInstaller创建可执行程序时，通过参数 `--icon="logo.ico"` 指定。
+
+  ```python
+  pyinstaller 文件名.py --noconsole --hidden-import PySide2.QtXml --icon="logo.ico"
+  ```
+
+  - 【注意】参数一定是存在的`ico`文件，不能是png等图片文件。
+
+  - 如果你只有png文件，可以通过在线的png转ico文件网站，生成ico，比如下面两个网站:
+
+    - https://www.zamzar.com/convert/png-to-ico/
+    - https://www.aconvert.com/cn/icon/png-to-ico/
+
+    【注意】：这些应用程序图标ico文件，在使用PyInstaller创建可执行程序时，**不需要**拷贝到程序所在目录。因为它已经被嵌入可执行程序了。
+
+
+
+## 单选框
+
+- 方法一：将同属一个类别的单选框选中后按住Ctrl+右键放入新建的**指定组**；
+- 方法二：将同属于一个类别的单选框在同一**布局**下；
+- 方法三：将同属一个类别的单选框放入同一个`Gropu Box；`
+
+
+
+## 显示样式
+
+- Qt有种定义界面显示样式的方法，称之为 `Qt Style Sheet` ，简称 `QSS`
+
+- 如果在**Qt Designer**界面上 最上层的 MainWindow 对象 `styleSheet` 属性指定如下的内容
+
+  ```python
+  QPushButton { 
+      color: red ;
+      font-size:15px;
+  }
+  ```
+
+  - 注意这个指定界面元素 显示样式的 语法，由 selector 和 declaration 组成。
+
+  - 花括号前面的 部分，比如示例中的 `QPushButton` 称之为 selector(选择器，即要改变样式的目标，如例子中的‘按钮’QPushButton)。
+
+  - 花括号后面的 部分，称之为 Properties （样式属性）
+
+### selector 选择器
+
+- { }前面的部分称之为`selector`，用来告诉Qt  **哪些特征的元素** 将要设定显示效果。
+
+  - 如，QPushButton 选择所有类型为`QPushButton`（包括其子类）的界面元素。
+
+- **selector**常见语法：
+
+  | Selector            | 示例                        | 说明                                              |
+  | ------------------- | --------------------------- | ------------------------------------------------- |
+  | Universal Selector  | `*`                         | 星号匹配所有的界面元素                            |
+  | Type Selector       | `QPushButton`               | 选择所有 QPushButton类型 （包括其子类）           |
+  | Class Selector      | `.QPushButton`              | 选择所有 QPushButton类型 ，但是不包括其子类       |
+  | ID Selector         | `QPushButton#okButton`      | 选择所有 `对象名为 okButton` 的QPushButton类型    |
+  | Property Selector   | `QPushButton[flat="false"]` | 选择所有 flat 属性值为 false 的 QPushButton类型。 |
+  | Descendant Selector | `QDialog QPushButton`       | 选择所有 QDialog `内部` QPushButton类型           |
+  | Child Selector      | `QDialog > QPushButton`     | 选择所有 QDialog `直接子节点` QPushButton类型     |
+
+- **Pseudo-States 伪状态**:
+
+  - 当鼠标移动到一个元素上方的时候，元素的显示样式:
+
+    ```python
+    QPushButton:hover { color: red }
+    ```
+
+  - 指定一个元素是disable状态的显示样式:
+
+    ```python
+    QPushButton:disabled { color: red }
+    ```
+
+  - 指定一个元素是鼠标悬浮，并且处于勾选（checked）状态的显示样式:
+
+    ```python
+    QCheckBox:hover:checked { color: white }
+    ```
+
+- **优先级**：
+
+  如果一个元素的显示样式被多层指定了， `越靠近元素本身` 的选择指定，优先级越高。
+

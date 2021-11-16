@@ -1314,3 +1314,21 @@ loader = Data.DataLoader(dataset = torch_dataset,
                         )
 ```
 
+
+
+
+
+## **Batchnorm**
+
+[参考博文](https://blog.csdn.net/qq_25737169/article/details/79048516)
+
+- 深度网络中经常用到的**加速神经网络训练**，**加速收敛速度及稳定性**的算法；
+
+
+
+## Dropout
+
+[参考博文](https://www.jianshu.com/p/ef2a7a78aa83)
+
+- 解决神经网络训练过程中的过拟合问题，因为当训练集的数量不多而网络参数相对多时，训练样本误差带来的影响很大，拟合过程中强行逼近到了误差值。因此在每一层神经网络中引入dropout，实现过程：在每次更新参数的过程中，随机的剔除掉部分神经元，不对其参数进行更新。
+

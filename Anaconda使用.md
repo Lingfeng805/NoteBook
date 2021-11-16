@@ -24,7 +24,7 @@ conda env remove -n 环境名
   conda update conda
   ```
 
-  
+  conda create -n pytorchtest python=3.6
 
 ## 创建虚拟环境
 
@@ -39,12 +39,6 @@ anaconda命令创建python版本为`x.x`，名字为`环境名`的虚拟环境�
   ```python
   Linux:  source activate your_env_nam
   Windows: conda activate your_env_name
-  ```
-
-- 对虚拟环境中安装额外的包
-
-  ```python
-  conda install -n 虚拟环境名 包名
   ```
 
 - 关闭虚拟环境

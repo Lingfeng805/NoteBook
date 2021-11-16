@@ -63,8 +63,8 @@
 - 【调用Kernel函数】
 
   ```python
-  griddim = 1, 2
-  blockdim = 3, 4
+  griddim = 1, 2    # 一个Grid中有多少个Block
+  blockdim = 3, 4    # 一个Block中有多少个Thead
   foo[griddim, blockdim](aryA, aryB)    # [ ] 内为定义调用了多少个线程
   ```
 
@@ -206,7 +206,8 @@ import math
 #GPU function
 @cuda.jit
 def process_gpu(img,rows,cols,channels):
-    tx = cuda.blockIdx.x*cuda.blockDim.x+cuda.threadIdx.x
+    # 把所有线程看作布满一个二维平面，tx,ty对应唯一线程的索引，即某线程位于平面的第几行第几列。
+    tx = cuda.blockIdx.x*cuda.blockDim.x+cuda.threadIdx.x    
     ty = cuda.blockIdx.y*cuda.blockDim.y+cuda.threadIdx.y
     if tx<rows and ty<cols:                             
         for c in range(channels):
@@ -261,11 +262,14 @@ def main_image_process():
     blockspergrid_y = int(math.ceil(cols/threadsperblock[1]))
     blockspergrid = (blockspergrid_x,blockspergrid_y)
     start_gpu = time.time()
-    dImg = cuda.to_device(img2)
+    # 1）把输入数据从CPU内存复制到GPU显存；（先在CPU上进行数据预处理，GPU）
+    dImg = cuda.to_device(img2)    
     cuda.synchronize()
+    # 2）在执行芯片上缓存数据，加载GPU程序并执行；
     process_gpu[blockspergrid,threadsperblock](dImg,rows,cols,channels)
     cuda.synchronize()
     end_gpu = time.time()
+    # 3）将计算结果从GPU显存中复制到CPU内存中；
     dst_gpu = dImg.copy_to_host()
     time_gpu = (end_gpu-start_gpu)
     print("GPU process time: "+str(time_gpu))
@@ -273,6 +277,7 @@ def main_image_process():
     cv2.imwrite("result_cpu.png",img)
     cv2.imwrite("result_gpu.png",dst_gpu)
     print("Done.")
+   
 ```
 
 第四步，执行，得到处理结果
@@ -282,3 +287,11 @@ main_image_process()
 ```
 
 我们很清楚的看到，完成同样的事情并得到相同的结果，CPU比GPU用了更多的时间
+
+
+
+- 1）数据加载到CPU 内存上；
+- 2）当使用GPU处理时，先要将数据从CPU 内存复杂到GPU显存 cuda.to_device(data)
+- 3）在执行芯片上缓存数据，加载GPU程序并执行；
+
+- 4）将计算结果从GPU显存中复制到CPU内存中；

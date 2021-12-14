@@ -27,14 +27,168 @@ lisa.print_score()
 - 类是一种抽象概念，比如上述定义的Student，是指学生这个概念，而实例(instance)则是一个个具体的Student。
 - 所以，面向对象的设计思想是抽象出Class，根据Class创建Instance.
 
+
+
+## 文件读写
+
+- python中读写文本文件，首先通过内置函数open( )打开一个文件，open( )函数会返回一个对象，称之为文本对象，该文本对象包含读取文本内容和写入文本内容的**方法**。
+
+- 要**写入**字符串到文件中，需要先将**字符串编码为字节串**;  （字符串可以理解为我们直接能看懂的字符，如汉字，字节串可以理解为一般我们看不懂但计算机可以看懂的编码信息，如二进制。）
+
+- 从文本文件中**读取**的文本信息都是**字节串**，进行处理之前，必须先将**字节串解码为字符串**。
+
+- **open函数的参数**：
+
+  ```python
+  open(
+      file,     # 文件路径
+      mode='r',     # 指定文件打开的模式；r-只读；w-只写；a-追加文本模式；
+      buffering=-1, 
+      encoding=None,     # 指定读写文本文件时，使用的字符编/解码方式。
+      errors=None, 
+      newline=None, 
+      closefd=True, 
+      opener=None
+      ) 
+  ```
+
+  - 【写文件示例】
+
+    - ```python
+      # 指定编码方式为 utf8
+      f = open('tmp.txt','w',encoding='utf8')
+      
+      # write方法会将字符串编码为utf8字节串写入文件
+      f.write('白月黑羽：祝大家好运气')
+      
+      # 文件操作完毕后， 使用close 方法关闭该文件对象
+      f.close()
+      ```
+
+  - 【读文件示例】
+
+    - ```python
+      # 指定编码方式为 gbk，gbk编码兼容gb2312
+      f = open('tmp.txt','r',encoding='utf8')
+      
+      # read 方法会在读取文件中的原始字节串后， 根据上面指定的gbk解码为字符串对象返回
+      content = f.read()
+      
+      # 文件操作完毕后， 使用close 方法关闭该文件对象
+      f.close()
+      
+      # 通过字符串的split方法获取其中用户名部分
+      name = content.split('：')[0]
+      
+      print(name)
+      ```
+
+- **二进制(字节)模式**（读写文件底层操作读写的**都是字节**）
+
+  - 就文件存储的底层来说，不管什么类型的文件(文本、视频、图片、word、Excel等)，存储的都是**字节**，不存在文本和二进制的区别，可以说都是**二进制**。
+
+    ```python
+    # mode参数指定为rb 就是用二进制读的方式打开文件
+    f = open('tmp.txt','rb')
+    content = f.read()   
+    f.close()  
+    
+    # 由于是 二进制方式打开，所以得到的content是 字节串对象 bytes
+    # 内容为 b'\xe7\x99\xbd\xe6\x9c\x88\xe9\xbb\x91\xe7\xbe\xbd'
+    print(content) 
+    
+    # 该对象的长度是字节串里面的字节个数，就是12，每3个字节对应一个汉字的utf8编码
+    print(len(content))
+    ```
+
+  - 以二进制方式写数据到文件中，传给write方法的参数不能是字符串，只能是bytes对象
+
+    ```python
+    # mode参数指定为 wb 就是用二进制写的方式打开文件
+    f = open('tmp.txt','wb')
+    
+    content = '白月黑羽祝大家好运连连'
+    # 二进制打开的文件， 写入的参数必须是bytes类型，
+    # 字符串对象需要调用encode进行相应的编码为bytes类型
+    f.write(content.encode('utf8'))
+    
+    f.close() 
+    ```
+
+- **with语句**
+
+  - 如果我们开发的程序 在进行文件读写之后，忘记使用close方法关闭文件， 就可能造成意想不到的问题。
+
+  - 可以使用with 语句 打开文件，像这样，就不需要我们调用close方法关闭文件。
+
+    ```python
+    # open返回的对象 赋值为 变量 f
+    with open('tmp.txt') as f:
+        linelist = f.readlines() 
+        for line in linelist:
+            print(line)
+    ```
+
+- **写入缓冲**
+
+  - 执行write方法写入字节到文件中时，其实只是把这个请求提交给操作系统；操作系统为了提高效率，通常并不会立即把内容写到存储文件中，而是写入内存的一个**缓冲区**。等到缓冲区的内容**堆满**之后，或者程序调用close( )关闭文件对象时，再写入到文件中。
+
+  - 如果希望在调用write( )之后，立即将内容写入文件，可以使用文件对象的**flush( )**方法。
+
+    ```python
+    f = open('tmp.txt','w',encoding='utf8')
+    
+    f.write('白月黑羽：祝大家好运气')
+    # 立即把内容写到文件里面
+    f.flush()
+    
+    # 等待 30秒，再close文件
+    import time
+    time.sleep(30)
+    
+    f.close()
+    ```
+
+    **flush()** 方法是用来刷新缓冲区的，即将缓冲区中的数据立刻写入文件，同时清空缓冲区，不需要是被动的等待输出缓冲区写入。一般情况下，文件关闭后会自动刷新缓冲区，但有时你需要在关闭前刷新它，这时就可以使用 flush() 方法。
+
+ 
+
 ## 类和实例
 
 实例是根据类创建出来的一个个具体的“对象”，每个对象都拥有相同的方法，但各自的数据可能不同。
+
+- `类属性`是类的共同特征属性；
+- `实例属性`是每个实例独有的属性；实例属性通常在类的初始化方法`__init__`里面定义；
+- 但有些属性，对应到具体的`类的实例对象`可能各有不同，即每个实例独有的属性，称为`类的实例属性`；
 
 ```python
 class Student(object):
     pass
 ```
+
+- `实例方法`：通常类的实例方法，都要访问类的实例属性的，包括：创建、修改、删除类的实例属性；因为`实例方法`就是要操作实例独有的属性，否则不操作任何实例属性的话，就应该定义为`类方法`。
+
+【注】：若实例属性名称和静态属性**重复了**，通过类实例访问该属性，访问的是实例属性，通过类名访问该属性，访问的是类属性。
+
+```python
+class Car:
+    brand = '奔驰'    # 类属性
+    name = 'Car'
+
+    def __init__(self):    # 初始化实例方法
+        # 可以通过实例访问到类属性
+        print(self.brand)
+
+        # 定义实例属性和类属性重名
+        self.name = 'benz car'    # 实例属性
+
+c1 = Car()
+
+print(f'通过实例名访问name：{c1.name}')    # 'benz car'
+print(f'通过类名  访问name：{Car.name}')    # 'Car'
+```
+
+
 
 class后紧跟着是**类名**`Student`,类名通常是大写开头的单词，紧接着是`(object)`,表示该类是从哪个类**继承**下来的，通常如果没有合适的继承类，就使用`object`类。
 
@@ -146,7 +300,7 @@ class Cat(Animal):
     pass
 ```
 
-- **继承**：子类获得父类的全部功能，因为Animal实现了run（）的方法，因此Dog和Cat作为子类，什么都没做，就自动拥有了run( )方法。
+- **继承**：子类获得父类的全部功能，因为Animal实现了run（）的方法，因此Dog和Cat作为子类，什么都没做，就自动拥有了run( )方法。`子类会自动拥有父类的一切属性和方法`
 
 改进，
 
@@ -685,3 +839,462 @@ logging.debug(u"如果设置了日志级别为NOTSET,那么这里可以采取deb
 - 【单元测试】
 
 单元测试是用来对一个模块、一个函数或者一个类来进行正确性检验的测试工作；
+
+
+
+# 多线程和多进程
+
+应用程序必须通过操作系统提供的`系统调用`，请求操作系统分配一个新的线程。
+
+python3将系统调用创建线程的功能封装在标准库**`threading`**中。
+
+```python
+print('主线程执行代码') 
+
+# 从 threading 库中导入Thread类
+from threading import Thread
+from time import sleep
+
+# 定义一个函数，作为新线程执行的入口函数
+def threadFunc(arg1,arg2):
+    print('子线程 开始')
+    print(f'线程函数参数是：{arg1}, {arg2}')
+    sleep(5)
+    print('子线程 结束')
+
+
+# 创建 Thread 类的实例对象
+thread = Thread(
+    # target 参数 指定 新线程要执行的函数
+    # 注意，这里指定的函数对象只能写一个名字，不能后面加括号，
+    # 如果加括号就是直接在当前线程调用执行，而不是在新线程中执行了
+    target=threadFunc, 
+
+    # 如果 新线程函数需要参数，在 args里面填入参数
+    # 注意参数是元组， 如果只有一个参数，后面要有逗号，像这样 args=('参数1',)
+    args=('参数1', '参数2')
+)
+
+# 执行start 方法，就会创建新线程，
+# 并且新线程会去执行入口函数里面的代码。
+# 这时候 这个进程 有两个线程了。
+thread.start()
+
+# 主线程的代码执行 子线程对象的join方法，
+# 就会等待子线程结束，才继续执行下面的代码
+thread.join()
+print('主线程结束')
+```
+
+- 运行上述程序，解释器执行到下面代码时
+
+  ```python
+  thread = Thread(target=threadFunc,
+                  args=('参数1','参数2')
+  				)
+  ```
+
+  创建一个`Thread`**实例对象**，其中，`Thread`类的初始化参数有两个：
+
+  - `target`参数：指定新线程的**入口函数**，新线程创建后就会执行该入口函数里面的代码；
+  - `args`参数：指定了传给**入口函数**的参数。线程入口函数的参数，必须放在一个**元组**里，里面的元素依次作为入口函数的参数。（特别的当只有一个参数时，写法为**args=('参数'，)**）
+
+- 经过上述过程，只是创建了一个**Thread实例对象**，而**新的线程还没有创建**。要创建线程，必须调用Thread实例对象的**`start`**方法。即一下代码：
+
+  ```python
+  thread.start()
+  ```
+
+  新的线程才创建成功，并开始执行入口函数里面的代码。
+
+- 有时，一个线程需要等待其他的线程结束，比如需要根据其他线程运行结束后的结果进行处理。这时可以使用Thread对象的**`join`**方法。
+
+  ```python
+  thread.join()
+  ```
+
+  若一个线程A的代码调用了对应线程B的Thread对象的join方法，线程A就会停止继续执行代码，等待线程B结束。线程B结束后，线程A才继续执行后续的代码。
+
+  `join`通常用于主线程把任务分配给几个子线程，等待子线程完成工作后，需要对他们任务处理结果进行再处理。这种情况，主线程必须在子线程完成后才能进行后续操作，所以join就是等待参数对应的线程完成，才返回。
+
+## 共享数据的访问控制
+
+多线程开发时，多个线程里面的代码需要访问同一个公共的数据对象？有时候，程序需要防止线程的代码同时操作公共数据对象，否则可能导致数据的访问互相冲突影响。
+
+```python
+from threading import Thread
+from time import sleep
+
+bank = {
+    'byhy' : 0
+}
+
+# 定义一个函数，作为新线程执行的入口函数
+def deposit(theadidx,amount):
+    balance =  bank['byhy']
+    # 执行一些任务，耗费了0.1秒
+    sleep(0.1)
+    bank['byhy']  = balance + amount
+    print(f'子线程 {theadidx} 结束')
+
+theadlist = []
+for idx in range(10):
+    thread = Thread(target = deposit,
+                    args = (idx,1)
+                    )
+    thread.start()
+    # 把线程对象都存储到 threadlist中
+    theadlist.append(thread)
+
+for thread in theadlist:
+    thread.join()
+
+print('主线程结束')
+print(f'最后我们的账号余额为 {bank["byhy"]}')
+```
+
+上述代码，出现多线程同时访问bank对象，有可能出现一个线程覆盖另一个线程的结果的问题。
+
+这时，可以使用threading库里面的锁对象**`Lock`**去保护。代码修改如下：
+
+```python
+from threading import Thread,Lock
+from time import sleep
+
+bank = {
+    'byhy' : 0
+}
+
+bankLock = Lock()
+
+# 定义一个函数，作为新线程执行的入口函数
+def deposit(theadidx,amount):
+    # 操作共享数据前，申请获取锁
+    bankLock.acquire()
+    
+    balance =  bank['byhy']
+    # 执行一些任务，耗费了0.1秒
+    sleep(0.1)
+    bank['byhy']  = balance + amount
+    print(f'子线程 {theadidx} 结束')
+    
+    # 操作完共享数据后，申请释放锁
+    bankLock.release()
+
+theadlist = []
+for idx in range(10):
+    thread = Thread(target = deposit,
+                    args = (idx,1)
+                    )
+    thread.start()
+    # 把线程对象都存储到 threadlist中
+    theadlist.append(thread)
+
+for thread in theadlist:
+    thread.join()
+
+print('主线程结束')
+print(f'最后我们的账号余额为 {bank["byhy"]}')
+```
+
+Lock对象的acquire方法是**申请锁**；每个线程在操作共享数据对象之前，都应该申请获取操作权，即调用 该共享数据对象对应的锁对象的acquire方法。
+
+若线程A执行如下代码，调用acquire方法的时候，`bankLock.acquire()`
+
+别的线程B已经申请到了这个锁，并且还没有释放，那么线程A的代码就在此处等待线程B释放锁，不去执行后面的代码。直到线程B执行了锁的`release`方法释放了这个锁，线程A才可以获取这个锁，线程A就可以接着执行下面的代码了。
+
+## daemon线程（守护线程）
+
+一般情况，代码中有多线程时，就算主线程先结束，也要等待子线程全部运行完毕，整个程序才会结束退出。**Python程序中当所有`非daemon线程`结束了，整个程序才会结束**
+
+而设置成daemon的线程会随着主线程的退出而结束。
+
+- daemon线程的使用场景：你需要一个始终运行的进程，用来监控其他服务的运行情况，或者发送心跳包或者类似的东西，你创建了这个进程后就不用管他了，他会随着主线程的退出而结束。
+
+## 多进程
+
+Python 官方解释器 的每个线程要获得执行权限，必须获取一个叫 GIL （全局解释器锁） 的东西。
+
+这就导致了 Python 的多个线程 其实 并不能同时使用 多个CPU核心。
+
+所以如果是计算密集型的任务，不能采用多线程的方式。
+
+- 如果需要利用电脑多个CPU核心的运算能力，可以使用Python的**多进程库**，如下：
+
+  ```python
+  from multiprocessing import Process
+  
+  def f():
+      while True:
+          b = 53*53
+  
+  if __name__ == '__main__':
+      plist = []
+      for i in range(2):
+          p = Process(target=f)
+          p.start()
+          plist.append(p)
+  
+      for p in plist:
+          p.join()
+  ```
+
+  还有一个问题，主进程如何获取 子进程的 运算结果呢？
+
+  可以使用多进程库 里面的 Manage 对象，如下:
+
+  ```python
+  from multiprocessing import Process,Manager
+  from time import sleep
+  
+  def f(taskno,return_dict):
+      sleep(2)
+      # 存放计算结果到共享对象中
+      return_dict[taskno] = taskno
+  
+  if __name__ == '__main__':
+      manager = Manager()
+      # 创建 类似字典的 跨进程 共享对象
+      return_dict = manager.dict()
+      plist = []
+      for i in range(10):
+          p = Process(target=f, args=(i,return_dict))
+          p.start()
+          plist.append(p)
+  
+      for p in plist:
+          p.join()
+  
+      print('get result...')
+      # 从共享对象中取出其他进程的计算结果
+      for k,v in return_dict.items():
+          print (k,v)
+  ```
+
+
+
+# JSON
+
+`客户端`和`服务器`之间需要进行**数据交换**；
+
+**序列化**：把程序的各种类型数据对象变成表示该数据对象的**字节串**的过程。（便于**传输**）
+
+**反序列化**：把**字节串**转化为程序中的数据对象；（便于**程序操作**）
+
+- 不同的客户端、服务端程序可能使用不同的语言，为了方便不同的编程语言处理，将需要处理的数据对象进行序列化；**JSON**(JavaScript Object Notation, JS 对象标记)是一种轻量级的数据交换格式。效率高、数据量小。
+
+- 【序列化】：使用json库里的`dumps`函数
+
+  ```python
+  import json
+  historyTransactions = [
+  
+      {
+          'time'   : '20170101070311',  # 交易时间
+          'amount' : '3088',            # 交易金额
+          'productid' : '45454455555',  # 货号
+          'productname' : 'iphone7'     # 货名
+      },
+      {
+          'time'   : '20170101050311',  # 交易时间
+          'amount' : '18',              # 交易金额
+          'productid' : '453455772955', # 货号
+          'productname' : '奥妙洗衣液'   # 货名
+      }
+  
+  ]
+  
+  # dumps 方法将数据对象序列化为 json格式的字节串
+  jsonstr = json.dumps(historyTransactions)
+  print(jsonstr)
+  ```
+
+  【注】`json.dumps`方法发现字符串中如果有非ASCII码字符串，比如中文，缺省就用该字符的Unicode数字表示；可以给参数`ensure_ascii = False`赋值，这样就可以显示中文。
+
+- 【反序列化】：使用json库里的`load`方法，把json格式的字符串变为Python中的数据对象
+
+  ```python
+  import json
+  jsonstr = '[{"time": "20170101070311", "amount": "3088", "productid": "45454455555", "productname": "iphone7"}, {"time": "20170101050311", "amount": "18", "productid": "453455772955", "productname": "\u5965\u5999\u6d17\u8863\u6db2"}]' 
+  
+  translist = json.loads(jsonstr)
+  print(translist)
+  print(type(translist))
+  ```
+
+
+# 正则表达式
+
+【关键】：**如何写出正确的表达式语法**？
+
+[在线验证](https://regex101.com/)
+
+## 常见语法
+
+- 普通字符：直接匹配它们；如英文、中文等一些具体的文字；
+
+- 特殊字符：不能表示直接匹配它们，而是表达一些特别的含义；如`. * + ? \ [ ] ^ $ { } | ( )`
+
+- 【点】匹配所有字符
+
+  `.`表示要匹配除了`换行符`之外的任何`单个`字符；
+
+  比如，从下面的文本中，选择出所有的颜色？即要找出所有以`色`结尾，并且包括前面的一个字符的词语。可以写成正则表达式：`.色`；其中‘点’代表了任意的`一个字符`。
+
+  ```python
+  content = '''苹果是绿色的
+  橙子是橙色的
+  香蕉是黄色的
+  乌鸦是黑色的'''
+  
+  import re
+  p = re.compile(r'.色')
+  for one in  p.findall(content):
+      print(one)
+  ```
+
+- 【星号】重复匹配任意次
+
+  `*`表示匹配前面的子表达式任意次，包括0次。
+
+  比如，从下面的文本中，选择每行逗号后面的字符串内容，包括逗号本身。可以写成正则表达式：`，.*`
+
+  - 紧跟在`.`后面，表示任意字符可以出现任意次，即在逗号后面的所有字符。
+
+  ```python
+  content = '''苹果，是绿色的
+  橙子，是橙色的
+  香蕉，是黄色的
+  乌鸦，是黑色的
+  猴子，'''
+  
+  import re
+  p = re.compile(r'，.*')
+  for one in  p.findall(content):
+      print(one)
+  ```
+
+- 【加号】重复匹配多次
+
+  `+`表示匹配前面的子表达式一次或多次，不包括0次。
+
+  比如，从下面的文本中，选择每行逗号后面的字符串内容，包括逗号本身。但添加一个条件，如果逗号后面没有内容，就不要选择了。可以写成正则表达式：`，.+`
+
+- 【问号】匹配0-1次
+
+  `?`表示匹配前面的子表达式0次或1次；
+
+- 【花括号】匹配指定次数
+
+  `{}`表示匹配前面的子表达式指定次数。
+
+  如`油{3}`表示匹配连续的`油`字3次；
+
+  如`油{3,4}`表示匹配连续的`油`字至少3次，至多4次（3次或4次）；
+
+- 【贪婪模式和非贪婪模式】
+
+  如把下面的字符串中的所有html标签都提取出来：
+
+  ```python
+  source = '<html><head><title>Title</title>'
+  ```
+
+  得到这样的一个列表：
+
+  ```python
+  ['<html>', '<head>', '<title>', '</title>']
+  ```
+
+  想到使用正则表达式：`<.*>`于是写出如下代码：
+
+  ```python
+  source = '<html><head><title>Title</title>'
+  
+  import re
+  p = re.compile(r'<.*>')
+  
+  print(p.findall(source))
+  # 运行后的结果如下
+  >>> ['<html><head><title>Title</title>']
+  ```
+
+  **显然是有问题的**，因为在正则表达式中，`*`,`+`,`?`都是贪婪的，使用他们时，会尽可能多的匹配内容，所以`<.*>`中的星号（匹配任意次数），一直匹配到了字符串最后的`</title>`里面的`e`。要解决这个问题，就需要使用**非贪婪模式**，即在星号后面加上`?`，相应的正则表达式变为：`<.*?>`
+
+- 【对元字符的转义】
+
+  当要搜索的内容本身就包含`元字符`,可以使用反斜杠进行转义。
+
+- 【匹配某种字符类型】
+
+  - `\d` 匹配0~9之间任意一个数字字符，等价于表达式[0-9]
+
+  - `\D` 匹配任意一个不是0~9之间的数字字符，等价于表达式[^0-9】
+
+  - `\s` 匹配任意一个空白字符，包括空格、tab、换行符等，等价于表达式[\t\n\r\f\v]
+
+  - `\S` 匹配任意一个非空白字符，等价于表达式【^ \t\n\r\f\v]
+
+  - `\w`  匹配任意一个文字字符，包括大小写字母、数字、下划线，等价于表达式 [a-zA-Z0-9_]
+
+    缺省情况也包括 Unicode文字字符，如果指定 ASCII 码标记，则只包括ASCII字母
+
+  - \W 匹配任意一个非文字字符，等价于表达式 [^a-zA-Z0-9_】
+
+  - 反斜杠也可以用在方括号里面，比如 [\s,.] 表示匹配 ： 任何空白字符， 或者逗号，或者点
+
+- 【方括号】匹配几个字符之一
+
+  - `[abc]` 可以匹配a,b,c里面的任意一个字符，等价于[a-c]
+
+- 【起始、结尾位置和单行、多行模式】
+
+  `^` 表示匹配文本的**开头**位置；
+
+  正则表达式可以设定**单行模式**和**多行模式**；
+
+  如下，每行最前面的数字表示水果的编号，最后的数字表示价格，若要提取所有的水果编号，正则表达式：`^\d+` 
+
+  ```python
+  content = '''001-苹果价格-60
+  002-橙子价格-70
+  003-香蕉价格-80'''
+  
+  import re
+  p = re.compile(r'^\d+', re.M)
+  for one in  p.findall(content):
+      print(one)
+  ```
+
+  `$` 表示匹配文本的**结尾**位置；
+
+  如果我们要提取所有的水果价格，用这样的正则表达式 `\d+$`
+
+  ```python
+  content = '''001-苹果价格-60
+  002-橙子价格-70
+  003-香蕉价格-80'''
+  
+  import re
+  p = re.compile(r'\d+$', re.M)
+  for one in  p.findall(content):
+      print(one)
+  ```
+
+- 【竖线】匹配其中之一
+
+  如`绿色|橙` 表示要配置的是`绿色`或者`橙`；
+
+- 【括号】分组
+
+  `组`就是把正则表达式匹配的内容里面**其中的某些部分**标记为某个组；
+
+  ```python
+  苹果，苹果是绿色的
+  橙子，橙子是橙色的
+  香蕉，香蕉是黄色的
+  ```
+
+  若选择每行逗号前面的字符串，也**包括逗号本身**，正则表达式：`^.*，`;
+
+  但是，如果要求是**不包括逗号**呢？可以使用组选择，正则表达式：`^(.*)，`

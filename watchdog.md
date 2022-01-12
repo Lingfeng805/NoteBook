@@ -22,7 +22,7 @@ import logging    # 用于输出运行日志，可设置输出日志的等级、
 from watchdog.observers import Observer
 from watchdog.events import LoggingEventHandler
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO,
                        format='%(asctime)s-%(message)s',
                        datefmt='%Y-%m-%d %H:%M:%S')  

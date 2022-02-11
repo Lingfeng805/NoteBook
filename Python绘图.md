@@ -298,3 +298,95 @@ sns.palplot(sns.color_palette("husl", 12))
 
 #### 使用分类Color Brewer调色板
 
+
+
+# `Matplotlib`
+
+## [1] `Matplotlib Pyplot`
+
+- `Pyplot`是`Matplotlib`的子库，提供了和`MATLAB`类似的绘图API;
+
+- `Pyplot`是常用的绘图模块，能很方便让用户绘制2D图表；
+
+- ```python
+  import matplotlib.pyplot as plt
+  ```
+
+- ```python
+  import matplotlib.pyplot as plt
+  import numpy as np
+  
+  xpoints = np.array([0, 6])
+  ypoints = np.array([0, 100])
+  
+  plt.plot(xpoints, ypoints)
+  plt.show()
+  ```
+
+  - 调用`plot()`函数，绘制二维图像；
+
+
+
+`plt.imshow()`函数设置：
+
+- 对于二维数组(灰度图像)，函数会自动将输入数据**归一化**变换至[0,1],然后显示；
+
+- 对于三维数组(彩色图像)，该函数不会自动对输入数据归一化处理，而是对数据取值范围提出要求：(1)若是`float`型数据，取值范围应在[0,1];（2）若是`int`型数据，取值范围应在[0,255]；
+
+- 【遇到问题】：经过处理运算后得到的数据类型为`float64`，如输入是二维数组，因函数会进行归一化处理，不受影响；当输入三维数组时，就需要转换到相应的数据类型或取值范围，才能在`plt.imshow()`函数中正常显示。
+
+  - 方法一：**强制转换数据类型**
+
+    - ```python
+      # 将float型数据转换成uint8类型
+      plt.imshow(ndarray.astype('uint8'))
+      ```
+
+  - 方法二：**将数据缩放到[0,1]**
+
+    - ```python
+      plt.imshow(ndarray/255)
+      ```
+
+## [2]`Matplotlib`绘制多图
+
+- 可以使用`pyplot`中的`subplot()`和`subplots()`方法来绘制多个子图；
+
+  - `subplot()`：绘图时需要**指定位置**；
+  - `subplots()`：可以一次生成多个，在调用时只需要调用生成对象的ax即可；
+
+- `subplot()`
+
+  ```python
+  subplot(nrows, ncols, index, **kwargs)
+  subplot(pos, **kwargs)
+  subplot(**kwargs)
+  subplot(ax)
+  ```
+
+  将绘图区分成`nrows`行和`ncols`列，从左到右，从上到下的顺序对每个子区域进行编号`1...N`，编号可通过参数`index`来设置。
+
+  ```python
+  # plot1
+  xpoints = np.array([0,6])
+  ypoints = np.array([0,100])
+  
+  plt.subplot(1,2,1)    # 指定位置：1行2列，第1个位置
+  plt.plot(xpoints,ypoints)
+  plt.title("plot 1")
+  ```
+
+- `subplots()`
+
+  ```python
+  matplotlib.pyplot.subplots(nrows=1, ncols=1, *, sharex=False, sharey=False, squeeze=True, subplot_kw=None, gridspec_kw=None, **fig_kw)
+  ```
+
+  - `nrows`:默认1，设置图表的行数；
+  - `ncols`:默认1，设置图表的列数；
+  - `sharex/sharey`:设置x/y轴是否共享属性，默认为false，可设置为`none/all/row/col`。False或none每个子图的x/y轴都是独立的，True或all：所有子图共享x/y轴；row设置每个子图共享一个x轴或y轴，col:设置每个子图列共享一个x轴或y轴。
+  - `squeeze`:布尔值，默认True,表示额外的维度从返回的Axes(轴)对象中挤出，对于N×1或1×N个子图，返回一个1维数组，对于N×M，N>1和M>1返回一个2维数组。如果设置为False，则不进行挤压操作，返回一个元素为Axes实例的2维数组，即使它最终是1×1。
+  - `subplot_kw`:可选，字典类型。把字典的关键字传递给`add_subplot()`来创建每个子图；
+  - `gridspec_kw`:可选，字典类型。把字典的关键字传递给`GridSpec`构造函数创建子图放在网格里(grid)。
+  - `**fig_kw`:把详细的关键字参数传递给`figure()`函数；
+  - 

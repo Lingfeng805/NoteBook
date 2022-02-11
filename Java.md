@@ -1496,4 +1496,346 @@ public static 返回值类型 方法名(参数){
   throws 异常类名;    //该格式是跟在方法的括号
   ```
 
-  
+- 自定义异常
+
+   ```java
+   public class 异常类名 extends Exception{
+   	无参构造
+       带参构造
+   }
+   ```
+
+  ```java
+  public class ScoreException extends Exception{
+  	public ScoreException(){}
+      public ScoreException(String message){
+      	super(message)；
+      }
+  }
+  ```
+
+- throws和throw的区别
+
+  | throws                                           | throw                              |
+  | ------------------------------------------------ | ---------------------------------- |
+  | 用在方法声明后面，跟的是异常类名                 | 用在方法体内，跟的是异常对象名     |
+  | 表示抛出异常，由该方法的调用者来处理             | 表示抛出异常，由方法体内的语句处理 |
+  | 表示出现异常的一种可能性，并不一定会发生这些异常 | 执行throw一定抛出了某种异常        |
+
+ ## 集合体系结构（集合进阶）
+
+集合类的特点：提供了一种存储空间**可变**的存储模型，存储的数据容量可以随时发生改变。
+
+- `Collection`
+- `List`
+- `Set`
+- `泛型`
+- `Map`
+- `Collections`
+
+![image-20220209112937314](E:/software/Typora/pictures/image-20220209112937314.png)
+
+### Collection集合概述和使用
+
+Collection集合概述
+
+- 是单列集合的顶层接口，它表示一组对象，这些对象也称为Collection的元素
+- JDK不提供此接口的任何直接实现，它提供更具体的子接口（如Set和List）实现
+
+创建Collection集合的对象
+
+- 多态的方式
+- 具体的实现类ArrayList
+
+```java
+public class CollectionDemo01 {
+    public static void main(String[] args) {
+        //创建Collection集合的对象
+        Collection<String> c = new ArrayList<String>();
+
+        //添加元素： boolean add(E e)
+        c.add("hello");
+        c.add("world");
+        c.add("java");
+
+        //输出集合对象
+        System.out.println(c);
+    }
+}
+```
+
+Collection集合常用方法：
+
+| 方法名                     | 说明                           |
+| -------------------------- | ------------------------------ |
+| boolean add(E e)           | 添加元素                       |
+| boolean remove(Object o)   | 从集合中移除指定的元素         |
+| void clear()               | 清空集合中的元素               |
+| boolean contains(Object o) | 判断集合中是否存在指定的元素   |
+| boolean isEmpty()          | 判断集合是否为空               |
+| int size()                 | 集合的长度，即集合中元素的个数 |
+
+Collection集合的遍历
+
+- Iterator:迭代器，集合的专用遍历方式；
+- Iterator<E> iterator():返回此集合中元素的迭代器，通过集合的iterator()方法得到；
+- 迭代器是通过集合的iterator()方法得到的，所以说它是依赖于集合而存在的；
+- 常用方法：
+  - E next():返回迭代中的下一个元素；
+  - boolean hasNext():如果迭代具有更多元素，则返回true；
+
+### List
+
+List集合概述：
+
+- 有序集合(也称为序列)，用户可以精确控制列表中每个元素的插入位置。用户可以通过整数索引访问元素，并搜索列表中的元素。
+- 与Set集合不同，列表通常允许重复的元素。
+
+List集合特点：
+
+- 有序：存储和取出的元素顺序一致；
+- 可重复：存储的元素可以重复；
+
+List集合特有方法：
+
+| 方法名                        | 说明                                   |
+| ----------------------------- | -------------------------------------- |
+| void add(int index,E element) | 在此集合中的指定位置插入指定的元素     |
+| E remove(int index)           | 删除指定索引处的元素，返回被删除的元素 |
+| E set(int index,E element)    | 修改指定索引处的元素，返回被修改的元素 |
+| E get(int index)              | 返回指定索引处的元素                   |
+
+并发修改异常：
+
+- ConcurrentModificationException
+- 产生原因：
+  - 迭代器遍历的过程中，通过集合对象修改了集合中元素的长度，造成了迭代器获取元素中判断预期修改值和实际修改值不一致；
+- 解决方案：
+  - 用for循环遍历，然后用集合对象做对应的操作即可。
+
+ListIterator:列表迭代器
+
+- 通过List集合的listlterator()方法得到，所以说它是List集合特有的迭代器；
+- 用于允许程序员沿**任一方向**遍历列表的列表迭代器，在迭代期间修改列表，并获取列表中迭代器的当前位置；
+- Listlterator中的常用方法：
+  - E next():返回迭代器中的下一个元素；
+  - boolean hasNext():如果迭代具有更多元素，则返回true.
+  - E previous():返回迭代器中的上一个元素；
+  - boolean hasPrevious():如果此迭代器在相反方向遍历列表时具有更多元素，则返回true.
+  - void add(E e):将指定的元素插入列表；
+
+增强for循环：
+
+增强for：简化数组和Collection集合的遍历
+
+- 实现lterable接口的类允许其对象成为增强型for语句的目标；
+- 它是JDK5之后出现的，其内部原理是一个lterator迭代器；
+
+**增强for**的格式：
+
+- ```java
+  for(元素数据类型 变量名 ： 数组或者Collection集合){
+  	// 在此处使用变量即可，该变量就是元素
+  }
+  ```
+
+- ```java
+  int[] arr = {}1,2,3,4,5};
+  for(int i : arr){
+  	System.out.println(i);
+  }
+  ```
+
+**数据结构**：数据结构是计算机存储、组织数据的方式。是指相互之间存在一种或多种特定关系的数据元素的集合；通常情况下，精心选择的数据结构可以带来更高的运行或存储效率。
+
+- 栈
+- 队列
+- 数组：查询效率高、删除/添加效率极低；
+- 链表：删除/添加效率高、查询效率低；
+
+List集合子类特点
+
+List集合常用子类：ArrayList, LinkedList
+
+- ArrayList:底层数据结构是数组，查询快，增删慢；
+- LinkedList:底层数据结构是链表，查询慢，增删快；
+
+LinkedList集合的特有功能
+
+| 方法名                    | 说明                             |
+| ------------------------- | -------------------------------- |
+| public void addFirst(E e) | 在该列表开头插入指定的元素       |
+| public void addLast(E e)  | 将指定的元素追加到此列表的末尾   |
+| public E getFirst()       | 返回此列表中的第一个元素         |
+| public E getLast()        | 返回此列表中的最后一个元素       |
+| public E removeFirst()    | 从此列表中删除并返回第一个元素   |
+| public E removeLast()     | 从此列表中删除并返回最后一个元素 |
+
+### Set
+
+Set集合特点：
+
+- 不包含重复元素的集合；
+- 没有带索引的方法，所以不能使用普通for循环遍历；	
+
+**哈希值**：是JDK根据对象的**地址**或者**字符串**或者**数字**算出来的int类型的**数值**。
+
+Object类中有一个方法可以获取**对象的哈希值**：
+
+- public int hashCode():返回对象的哈希码值；
+
+对象哈希值特点：
+
+- 同一个对象多次调用hashCode()方法返回的哈希值是相同的；
+- 默认情况下，不同对象的哈希值是不同的。而重写hashCode()方法，可以实现让不同对象的哈希值相同；
+
+**HashSet集合概述和特点**：
+
+- 底层数据结构是哈希表；
+- 对集合的迭代顺序不作任何保证，即不保证存储和取出的元素顺序一致；
+- 没有带索引的方法，所以不能使用普通for循环遍历；
+- 由于是Set集合，所以是不包含重复元素的集合。
+
+常见数据结构之**哈希表**：
+
+- 在JDK8之前，底层采用**数组+链表**实现，可以说是一个元素为链表的数组；
+- JDK8以后，在长度比较长的时候，底层实现了优化。
+- 【先比较哈希值】：哈希值不同直接存；哈希值相同时再比较内容，内容相同不存储，内容不同则存储；
+
+【注】：不同对象的哈希值默认不同，即便存储的数据一模一样。所以hashSet无法直接保证唯一性；
+
+- 如存储以下4个学生对象数据：
+
+  - 1.小明，14岁；
+  - 2.小红，15岁；
+  - 3.小华，16岁；
+  - 4.小明，14岁；
+
+  在默认情况下，这4个数据对象的哈希值默认都不同，即直接用hashSet集合存储的话这4个数据都将被存储，违背了**Set集合的不包含重复元素**的特点。
+
+  因此，需要**重写两个方法**，保证在对象内部存储内容一致时对象的哈希值相同，从而再通过hashset保证元素唯一性。需要重新的两个方法为（自动生成即可）：
+
+  - hashCode()方法
+  - equals()方法
+
+**LinkedHashSet集合概述和特点**：
+
+- 哈希表和链表实现的Set接口，具有**可预测**的迭代次序；
+- 由链表保证元素有序，即元素的存储和取出顺序是一致的；
+- 由哈希表保证元素唯一，即没有重复的元素；
+
+**TreeSet集合概述和特点**：
+
+- 元素有序，此处的顺序不是值存储和取出的顺序，而是按照一定的规则进行排序，具体排序方式取决于构造方法；
+  - 无参构造方法TreeSet():根据其元素的自然排序进行排序；
+  - 带参构造方法TreeSet(Comparator comparator):根据指定的比较器进行排序；
+- 没有带索引的方法，所以不能使用普通for循环遍历（可使用迭代器和增强for遍历）；
+- 由于是Set集合，所以不包含重复元素的集合；
+
+【自然排序Comparable的使用】
+
+- 重写compareTo()方法：
+
+  ```java
+  @Override
+  public int compareTo(Student s){
+  	return 0;//默认为0，表示存入的下一个元素和当前元素相同
+      //return 1；  //升序，按照存入时的顺序
+      //return -1；  //倒序，按照存入的倒序
+  }
+  ```
+
+  ```java
+  @Override
+  public int compareTo(Student s){
+      int num = this.age - s.age;  //按照age的升序
+      return num;
+  }
+  ```
+
+【比较器排序Comparator的使用】----通过匿名内部类的方式new Comparator<>()
+
+- 用TreeSet集合存储自定义对象，带参构造方法使用的是**比较器排序**对元素进行排序的
+- 比较器排序，就是**让集合构造方法接收Comparator的实现类对象**，重写compare(T o1,T o2)方法；
+- 重写方法时，一定要注意排序规则必须按照要求的主要条件和次要条件来写；
+
+### 泛型
+
+- 泛型的实质就是一个**类型占位符**。
+
+- 即"**参数化类型***"。将类型由原来的具体的类型参数化，类似于方法中的变量参数，此时类型也定义成参数形式(可称之为类型形参)，然后在使用/调用时传入具体的类型(类型实参)。
+
+  ```java
+  //具体的类型----如String
+  //参数化----E、T、W，即可理解为仅仅是一个“类型占位符”；如E代表一个类型E；
+  ```
+
+  使用泛型的意义在于：
+
+  - 【1】适用于多种数据类型执行相同的代码（代码复用）；
+  - 【2】泛型中的类型在使用时指定，不需要强制类型转换（类型安全，编译器会检测类型）；
+
+- **泛型类**的**使用**：
+
+  定义一个**泛型类**：public class GenericClass<T>{}
+
+  ```java
+  public class GenericClass<T>{    //T仅代表一个类型T，类似于String、Integer等表示种种类型
+      private T data;    //想象成private String data;或者private int data；这种写法
+      
+      public T getData(){
+          return data;
+      }
+      public void setData(T data){
+      	this.data = data;
+      }
+      
+      public static void main(String[] args){
+      	//创建GenericClass类对象
+          //泛型T在使用时指定为String类型
+          GenericClass<String> genericClass = new GenericClass<>();
+          //调用了set方法
+          genericClass.setData("Generic Class");	
+      }
+  }
+  ```
+
+- **泛型接口**的使用：
+
+​	定义一个**泛型接口**：public interface GenericIntercace<T>{}
+
+- **泛型方法**的使用：
+
+​	定义一个**泛型方法**：public static <T> genericAdd<T a, T b>{}
+
+```java
+public class GenericMethod1 {
+    private static int add(int a, int b) {
+        System.out.println(a + "+" + b + "=" + (a + b));
+        return a + b;
+    }
+
+    private static <T> T genericAdd(T a, T b) {
+        System.out.println(a + "+" + b + "="+a+b);
+        return a;
+    }
+
+    public static void main(String[] args) {
+        GenericMethod1.add(1, 2);
+        GenericMethod1.<String>genericAdd("a", "b");
+    }
+}
+```
+
+- 泛型中的约束和局限性：
+
+   1,不能实例化泛型类
+   2,静态变量或方法不能引用泛型类型变量，但是静态泛型方法是可以的
+   3,基本类型无法作为泛型类型
+   4,无法使用instanceof关键字或==判断泛型类的类型
+   5,泛型类的原生类型与所传递的泛型无关，无论传递什么类型，原生类是一样的
+   6,泛型数组可以声明但无法实例化
+   7,泛型类不能继承Exception或者Throwable
+   8,不能捕获泛型类型限定的异常但可以将泛型限定的异常抛出
+
+- 泛型的本质是为了参数化类型(在不创建新的类型的情况下，通过泛型指定的不同类型来控制形参具体限制的类型)。即在泛型使用过程中，操作的数据类型被指定为一个参数，这种参数类型可以用在类、接口和方法中，分别被称为泛型类、泛型接口、泛型方法。

@@ -1222,21 +1222,115 @@ public static 返回值类型 方法名(参数){
   内部类的访问特点：
 
   - 内部类可以直接访问外部类的成员，包括私有；
+
   - 外部类要访问内部类的成员，必须创建对象；
+
+  - **内部类与普通类有个最大的不同，就是内部类的实例不能单独存在，必须依附于一个外部类的实例**。
+
+    ```java
+    //要实例化一个Inner,必须首先创建一个Outer的实例，然后调用Outer实例的new来创建Inner实例
+    public class Main {
+        public static void main(String[] args) {
+            Outer outer = new Outer("Nested"); // 实例化一个Outer
+            Outer.Inner inner = outer.new Inner(); // 实例化一个Inner
+            inner.hello();
+        }
+    }
+    class Outer {
+        private String name;
+    
+        Outer(String name) {
+            this.name = name;
+        }
+    
+        class Inner {
+            void hello() {
+                System.out.println("Hello, " + Outer.this.name);
+            }
+        }
+    }
+    ```
+
+    
 
 - 局部内部类：是在方法中定义的类，所以外界是无法直接使用，需要在方法内部创建对象并使用；该类可以直接访问外部类的成员，也可以访问方法内的局部变量。
 
-- **匿名内部类**：前提：存在一个类或者接口，这里的类可以是具体类也可以是抽象类；
+- **匿名内部类**：不需要在Outer Class中明确地定义这个Class,而是在方法内部，通过匿名类来定义。
+
+  前提：存在一个类或者接口，这里的类可以是具体类也可以是抽象类；
 
   - 格式：
-
+  
     ```java
     new 类名或者接口名（）{
         重写方法；
     };
     ```
-
+  
     **本质**：是一个继承了该类或者实现了该接口的子类匿名对象；
+    
+  - 例子：
+  
+    ```java
+    //1.首先定义一个抽象类
+    abstract class Animal{
+    	//抽象类中有一个抽象方法
+        public abstract void run();
+    }
+    ```
+  
+    ```java
+    //一个典型的匿名内部类如下
+    public class Demo{
+    	public static void main(String[] args){
+        	//创建一个对象
+            Animal a = new Animal(){            //----从“new Animal(){"
+                //重写run方法
+            	public void run(){
+                	System.out.println("猫跑步");
+                }
+            };                                   //----一直到“}；”这里都属于匿名内部类
+            //调用run方法
+            a.run();
+        }
+    }
+    ```
+  
+    **对比与非匿名内部类，匿名内部类省去了实现一个Animal的具体类(子类)的步骤**
+  
+    如，上述代码可以用这样的非匿名内部类实现：
+  
+    ```java
+    //1.首先定义一个抽象类
+    abstract class Animal{
+    	//抽象类中有一个抽象方法
+        public abstract void run();
+    }
+    ```
+  
+    ```java
+    //2.实现一个Animal的子类
+    public class Cat extends Animal{
+    	public void run(){
+                	System.out.println("猫跑步");
+        }
+    }
+    ```
+  
+    ```java
+    //主函数
+    public class Demo{
+    	public static void main(String[] args){
+        	//创建一个子类对象（编译看左边，运行看右边）
+            Animal a = new Cat();
+            a.run();
+        }
+    }
+    ```
+  
+    匿名内部类的**核心**：使用匿名内部类，**省去**了新建一个子类的过程。（简化代码）
+  
+    
 
 ## 枚举类
 
@@ -1839,3 +1933,189 @@ public class GenericMethod1 {
    8,不能捕获泛型类型限定的异常但可以将泛型限定的异常抛出
 
 - 泛型的本质是为了参数化类型(在不创建新的类型的情况下，通过泛型指定的不同类型来控制形参具体限制的类型)。即在泛型使用过程中，操作的数据类型被指定为一个参数，这种参数类型可以用在类、接口和方法中，分别被称为泛型类、泛型接口、泛型方法。
+
+【类型通配符】
+
+- <?> ：所有都能匹配；
+- <? extends SuperClass> ：SuperClass及其SuperClass的子类（类型通配符上限）
+- <? super SubClass> ：SubClass及其SubClass的父类（类型通配符下限）
+
+【可变参数】
+
+可变参数又称参数个数可变，用作方法的形参出现，那么方法参数个数就是可变的了。
+
+- 格式：修饰符 返回值类型 方法名(数据类型...变量名){}
+- 范例：public static int sum(int...a)}{}
+
+可变参数注意事项：
+
+- 此处的变量其实是一个数组；
+- 如果一个方法有多个参数，包含可变参数，可变参数要放在最后。
+
+【可变参数的使用】
+
+Arrays工具类中有一个静态方法：
+
+- public static <T> List <T> asList(T...a): 返回由指定数组支持的固定大小的列表；
+- 返回的集合不能做增删操作，可以做修改操作；
+
+List接口中有一个静态方法：
+
+- public static <E> List<E> of(E...elements): 返回包含任意数量元素的不可变列表；
+- 返回的集合不能做增删改操作；
+
+Set接口中有一个静态方法：
+
+- public static <E> Set<E> of(E...elements): 返回一个包含任意数量元素的不可变集合；
+- 在给元素的时候，不能给重复的元素；
+- 返回的集合不能做增删操作，没有修改的方法。
+
+### Map
+
+【Map集合概述和使用】
+
+Map集合概述：
+
+- Interface Map<K,V>    K:键的类型； V:值的类型；
+- 将键映射到值的对象；不包含重复的键；每个键可以映射到最多一个值；
+
+创建Map集合的对象：
+
+- 多态的方式  ；
+- 具体的实现类HashMap
+
+【Map集合的基本功能】
+
+| 方法名                              | 说明                             |
+| ----------------------------------- | -------------------------------- |
+| V put(K key,V value)                | 添加元素                         |
+| V remove(Object key)                | 根据键删除键值对元素             |
+| void clear()                        | 移除所有的键值对元素             |
+| boolean containsKey(Object key)     | 判断集合是否包含指定的键         |
+| boolean containsValue(Object value) | 判断集合是否包含指定的值         |
+| boolean isEmpty()                   | 判断集合是否为空                 |
+| int size()                          | 集合的长度，即集合中键值对的个数 |
+
+【Map集合的获取功能】
+
+| 方法名                         | 说明                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
+| V get(Object key)              | 根据键获取值                                                 |
+| Set<K> keySet()                | 获取所有键的集合（由于键不能重复，所以返回Set集合）          |
+| Collection<V> values()         | 获取所有值的集合（值的唯一性没有要求，所以返回Collection集合） |
+| Set<Map.Entry<K,V>> entrySet() | 获取所有键值对对象的集合                                     |
+
+### Collections
+
+【Collections概述和使用】
+
+- 是针对集合操作的工具类；
+- public static <T extends Comparable<? super T>> void sort(List<T> list): 将指定的列表按升序排序；
+- public static void reverse(List<?> list): 反转指定列表中元素的顺序；
+- public static void shuffle(List<?> list): 使用默认的随机源随机排列指定的列表；
+
+
+
+## IO流
+
+- File
+- 字节流
+- 字符流
+- 特殊操作流
+
+### File
+
+【File类概述和构造方法】
+
+- File:它是文件和目录路径名的抽象表示；
+
+  - 文件和目录是可以通过File封装成对象的；
+  - 对于File而言，其封装的并不是一个真正存在的文件，仅仅是一个路径名而已。它可以是存在的，也可以是不存在的。将来是要通过具体的操作把这个路径的内容转换为具体存在的。
+
+  | 方法名                           | 说明                                                       |
+  | -------------------------------- | ---------------------------------------------------------- |
+  | File(String pathname)            | 通过将给定的路径名字符串转换为抽象路径名来创建新的File实例 |
+  | File(String parent,String child) | 从父路径名字符串和子路径字符串创建新的File实例             |
+  | File(File parent,String child)   | 从父抽象路径名和子路径名字符串创建新的File实例             |
+
+【File类创建功能】
+
+| 方法名                         | 说明                                                         |
+| ------------------------------ | ------------------------------------------------------------ |
+| public boolean createNewFile() | 当具有该名称的文件不存在时，创建一个由该抽象路径名命名的新空文件 |
+| public boolean mkdir()         | 创建由此抽象路径名命名的目录                                 |
+| public boolean mkdirs()        | 创建由此抽象路径名命名的目录，包括任何必须但不存在的父目录   |
+
+【File类判断和获取功能】
+
+| 方法名                          | 说明                                                         |
+| ------------------------------- | ------------------------------------------------------------ |
+| public boolean isDirectory()    | 测试此抽象路径名表示的File是否为目录                         |
+| public boolean isFile()         | 测试此抽象路径名表示的File是否为文件                         |
+| public boolean exists()         | 测试此抽象路径名表示的File是否存在                           |
+| public String getAbsolutePath() | 返回此抽象路径名的绝对路径名字符串                           |
+| public String getPath()         | 将此抽象路径名转换为路径名字符串                             |
+| public String getName()         | 返回此抽象路径名表示的文件或目录的名称                       |
+| public String[] list()          | 返回一个字符串数组，用于命名此抽象路径名表示的目录中的文件和目录 |
+| public File[] listFiles()       | 返回一个抽象路径名数组，表示此抽象路径名表示的目录中的文件   |
+
+【File类删除功能】
+
+public boolean delete()    删除由此抽象路径名表示的文件或目录
+
+如果一个目录中有内容(目录/文件)，**不能直接删除**。应该先删除目录中的内容，最后才能删除目录。
+
+【递归】
+
+递归解决问题的思路：把一个复杂的问题层层转化为一个**与原问题相似的规模较小**的问题来求解，递归策略只需**少量的程序**就可描述出解题过程所需要的多次重复计算。
+
+递归解决问题要找到两个内容：
+
+- 递归出口：否则会出现内存溢出；
+- 递归规则：与原问题相似的规模较小的问题；
+
+```java
+/*
+斐波那契数列：1，1，2，3，5，8，13，21，34，55，89...
+1.首先定义一个方法f(n)
+2.则第n-1对应的函数值为f(n-1);第n-2对应的函数值为f(n-2);
+3.f(n)=f(n-1)+f(n-2)
+*/
+
+public static int f(int n){
+    if(n==1 || n==2){
+    	return 1;    //递归出口
+    }else{
+		return f(n-1)+f(n-2);
+    }
+}
+```
+
+### 字节流
+
+【字节流写数据】
+
+字节流抽象基类
+
+- `InputStream`: 这个抽象类是表示字节流输入流的所有类的超类；
+- `OutputStream`: 这个抽象类是表示字节流输出流的所有类的超类；
+- 子类名特点：子类名称都是以其父类名作为子类名的后缀。
+
+FileOutputStream:文件输出流用于将数据写入File
+
+- `FileOutputStream(String name)`: 创建文件输出流以指定的名称写入文件；
+
+使用字节输出流写数据的步骤：
+
+- 创建字节输出流对象(调用系统功能创建了文件，创建字节输出流对象，让字节输出流对象指向文件)
+- 调用字节输出流对象的写数据方法；
+- 释放资源(关闭此文件输出流并释放与此流相关联的任何系统资源)
+
+【字节流写数据的3种方式】
+
+| 方法名                               | 说明                                                         |
+| ------------------------------------ | ------------------------------------------------------------ |
+| void write(int b)                    | 将指定的字节写入此文件输出流，一次写入一个字节数据           |
+| void write(byte[] b)                 | 将b.length字节从指定的字节数组写入次文件输出流；一次写一个字节数组数据 |
+| void write(byte[] b,int off,int len) | 将len字节从指定的字节数组开始，从偏移量off开始写入此文件输出流；一次写一个字节数组的部分数据 |
+

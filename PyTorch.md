@@ -1332,3 +1332,753 @@ loader = Data.DataLoader(dataset = torch_dataset,
 
 - 解决神经网络训练过程中的过拟合问题，因为当训练集的数量不多而网络参数相对多时，训练样本误差带来的影响很大，拟合过程中强行逼近到了误差值。因此在每一层神经网络中引入dropout，实现过程：在每次更新参数的过程中，随机的剔除掉部分神经元，不对其参数进行更新。
 
+
+
+# Torch.nn
+
+## `nn.Linear()`
+
+- `nn.Linear()`:用于设置网络中的全连接层，需要注意的是全连接层的输入与输出都是二维张量;形状通常为`[batch_size, size]`,不同于卷积层要求输入输出是思维张量。
+
+  其用法与形参说明如下：
+
+  `CLASS torch.nn.Linear(in_features, out_features,bias=True)`
+
+  - `in_features` ：输入的二维张量的大小，即输入的`[batch_size, size]`中的size。
+  - `out_features` ：输出的二维张量的大小，即输出的二维张量的形状为`[batch_size，output_size]`，当然，它也代表了该全连接层的神经元个数。
+  - 从输入输出的张量的shape角度来理解，相当于一个输入为`[batch_size,in_features]`的张量变换成了`[batch_size, out_features]`的输出张量。
+
+  【用法示例】
+
+  ```python
+  import torch
+  from torch import nn
+  
+  
+  # in_features由输入张量的形状决定，out_features则决定了输出张量的形状
+  connected_layer = nn.Linear(in_features = 64*64*3, out_features = 1)
+  
+  # 假定输入的图像形状为[64,64,3]----1张3个channel尺寸为64×64的图片
+  input = torch.randn(1,3,64,64)
+  
+  # 将四维张量转换为二维张量之后，才能作为全连接层的输入
+  input = input.view(1,64*64*3)  # 还有种写法“input = input.view(1, -1)”
+  print(input.shape)    # [1, 12288]
+  
+  output = connected_layer(input) # 调用全连接层
+  print(output.shape)    # [1, 1]
+  ```
+
+## `nn.Conv3d()`
+
+- `nn.Conv3d()`:
+
+  其用法与形参说明如下：
+
+  `CLASS torch.nn.Conv3d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', device=None, dtype=None)`
+
+  简化理解为：输入size为`(N, Cin,D,H,W)`;  输出size为`(N,Cout,Dout,Hout,Wout)`;
+
+  ![关系式](E:/software/Typora/pictures/image-20220302102457453.png)
+
+  - `N`:即`batch_size`,以此训练的样本数；
+  - `Cin`:输入图像的通道数；如RGB图像为3；
+  - `D`:深度；这个参数是在二维卷积中没有的，也是能提取到时序信息的关键，但是也很好理解，就是用于提取时序特征的帧数
+  - `H,W`:输入图像的高和宽；
+
+  输出参数：
+
+  - 输出的参数中需要值得提的就是Dout, 这个参数就是提取的时序信息的维度，具体的大小是由卷积核的大小确定的；
+
+  【用法示例】
+
+  ```python
+  import torch
+  import torch.nn as nn
+  from torch import autograd
+  
+  # kernel_size的第一个维度的值是每次处理的图像帧数，后面是卷积核的大小
+  m = nn.Conv3d(3, 3, (3, 7, 7), stride=1, padding=0)
+  input = autograd.Variable(torch.randn(1, 3, 7, 60, 40))
+  output = m(input)
+  print(output.size())    # 输出是 torch.Size([1, 3, 5, 54, 34])
+  ```
+
+
+
+# 构建CNN网络
+
+## LetNet-5
+
+- 最经典的CNN网络之一，由卷积层、激活层、池化层、全连接层组成。
+
+  ![img](E:/software/Typora/pictures/webp.webp)
+
+- 【定义CNN网络】
+
+  ```python
+  import torch
+  import torch.nn as nn
+  import torch.nn.functional as F
+  '''
+  CNN计算
+  卷积层输入/输出关系：
+  H = (H - F +2 * P) / S + 1
+  W = (W - F +2 * P) / S + 1
+  池化层输入/输出关系：
+  H = (H-F)/S+1
+  W = (W-F)/S+1
+  
+  LetNet-5
+  input:32*32*3
+  
+  out_conv1 = (32-5+2*0)/1+1 = 28
+  max_pool1 = (28-2)/2+1 = 14
+  out_conv2 = (14-5+2*0)/1+1 = 10
+  max_pool2 = (10-2)/2+1 = 5
+  '''
+  
+  class Net(nn.Module):
+      def __init__(self):
+          super(Net, self).__init__()
+          # conv1层，输入的灰度图，即in_channels=1；out_channels=6说明使用了6个卷积核
+          # kernel_size=5卷积核大小为5*5
+          self.conv1 = nn.Conv2d(in_channels=1,out_channels=6,kernel_size=5)
+          # conv2层：此层的in_channels等于上一层的out_channels
+          # 此层的out_channels=16说明使用了16个卷积核
+          self.conv2 = nn.Conv2d(in_channels=6,out_channels=16, kernel_size=5)
+          # 全连接层fc1，因为32x32图像输入到fc1层时候，feature map为： 5x5x16
+          # 因此，fc1层的输入特征维度为：16*5*5，因为上一层conv2的out_channels=16
+          # out_features=84,输出维度为84，代表该层为84个神经元
+          self.fc1 = nn.Linear(16*5*5,120)
+          self.fc2 = nn.Linear(in_features=120,out_features=84)
+          self.fc3 = nn.Linear(in_features=84,out_features=10)
+          pass
+      
+      def forward(self, x):
+          # Max pooling over a (2, 2) window
+          # intput-->[CONV-->ReLU]×N---->[POOL]×M---->[FC-->ReLU]×K---->FC
+          x = F.max_pool2d(F.relu(self.conv1(x)), (2,2))
+          x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+          # 特征图转换为一个１维的向量
+          x = x.view(-1, self.num_flat_features(x))
+          x = F.relu(self.fc1(x))
+          x = F.relu(self.fc2(x))
+          x = self.fc3(x)
+          return x
+      
+      def num_flat_features(self, x):
+          # x--[16,5,5]，则此处size=25
+          size = x.size()[1:]    # all dimensions except the batch dimension
+          num_features = 1
+          for s in size:
+              num_features *= s
+          return num_features
+      
+      
+  net = Net()
+  print(net)
+  ```
+
+- 【网络的参数】
+
+  网络可学习参数：`w`:权重、`b`：偏置；
+
+  ```python
+  # The learnable parameters of a model are returned by net.parameters()
+  params = list(net.parameters())
+  ```
+
+- 【测试一个样例】
+
+  `LetNet-5` 输入样本为：`32x32x1`的图像
+
+  `torch.randn(1, 1, 32, 32)` 输出一个1(`nSample`)x1(`channels`)x32(`width`)x32(`width`)的Tensor
+
+  ```python
+  # Try a random 32x32 input
+  input = torch.randn(1, 1, 32, 32)
+  out = net(input)
+  print(out)
+  ```
+
+# pytorch网络结构可视化
+
+使用pytorch定义网络结构之后，为了直观起见，需要可视化网络结构，以图的形式显示出来。可采用`netron`
+
+- 【1】安装`netron`包：
+
+  打开Anaconda Prompt进入自己的pytorch环境，运行代码安装netron依赖包；
+
+  ```python
+  conda activate mynetron
+  # 在新的虚拟环境中安装pytorch
+  conda install pytorch torchvision torchaudio cudatoolkit=10.2 
+  # 在虚拟环境中安装netron
+  pip install netron
+  ```
+
+- 【2】查看网络结构
+
+  ```python
+  # 针对有网络模型，但还没有训练保存 .pth 文件的情况
+  import netron
+  import torch.onnx
+  from torch.autograd import Variable
+  from torchvision.models import resnet18  # 以 resnet18 为例
+  
+  myNet = resnet18()  # 实例化 resnet18
+  x = torch.randn(16, 3, 40, 40)  # 随机生成一个输入
+  modelData = "./demo.pth"  # 定义模型数据保存的路径
+  # modelData = "./demo.onnx"  # 有人说应该是 onnx 文件，但我尝试 pth 是可以的 
+  torch.onnx.export(myNet, x, modelData)  # 将 pytorch 模型以 onnx 格式导出并保存
+  netron.start(modelData)  # 输出网络结构
+  
+  #  针对已经存在网络模型 .pth 文件的情况
+  import netron
+  
+  modelData = "./demo.pth"  # 定义模型数据保存的路径
+  netron.start(modelData)  # 输出网络结构
+  ```
+
+  
+
+# torch.nn.Module类
+
+`torch.nn.Module`类是所有神经网络的基类。
+
+- 【神经网络构架的基本格式】
+
+  ```python
+  import torch.nn as nn
+  import torch.nn.functional as F
+  
+  class Model(nn.Module):
+      def __init__(self):
+          super(Model, self).__init__()
+          self.conv1 = nn.Conv2d(1, 20, 5)
+          self.conv2 = nn.Conv2d(20, 20, 5)
+          pass
+      
+      def forward(self, x):
+          x = F.relu(self.conv1(x))
+          return F.relu(self.conv2(x))
+  ```
+
+- 【`torch.nn.Module`类的主要方法】
+
+  - 【1】`add_module(name, module)`
+
+    功能：给当前的module添加一个子module；
+
+    ——name:子module名；
+
+    ——module：子module；
+
+  - 【2】`applay(fn)`
+
+    功能：对所有子module使用fn;
+
+    ——fn(sub_module)
+
+  - 【3】`forward(*input)`
+
+    功能：神经网络的前向计算。所有子类必须实现该方法。
+
+  - 【4】`parameters()`
+
+    功能：返回moudle parameters的迭代器；
+
+  # torch.nn.Sequential类
+
+  `torch.nn.Sequential`是一个顺序容器container.**根据传入的构造方法依次添加module**。也可以直接传入一个有序字典OrderedDict。
+
+  ```python
+  # Example of using Sequential
+  model = nn.Sequential(
+            nn.Conv2d(1,20,5),
+            nn.ReLU(),
+            nn.Conv2d(20,64,5),
+            nn.ReLU()
+          )
+  ```
+
+  ```python
+  # Example of using Sequential with OrderedDict
+  model = nn.Sequential(OrderedDict([
+            ('conv1', nn.Conv2d(1,20,5)),
+            ('relu1', nn.ReLU()),
+            ('conv2', nn.Conv2d(20,64,5)),
+            ('relu2', nn.ReLU())
+          ]))
+  ```
+
+# 实现/构建神经网络的不同方式
+
+【方法一】
+
+- 简单方式
+
+  ```python
+  class Net1(nn.Module):
+  
+      def __init__(self):
+          super(Net1, self).__init__()
+  
+          self.conv1 = nn.Conv2d(in_channels=3,
+                                 out_channels=32,
+                                 kernel_size=3,
+                                 stride=1,
+                                 padding=1)
+          # why 32*32*3
+          self.fc1 = nn.Linear(in_features=32 * 3 * 3,
+                               out_features=128)
+          self.fc2 = nn.Linear(in_features=128,
+                               out_features=10)
+  
+      def forward(self, x):
+          x = F.max_pool2d(F.relu(self.conv1(x)), 2)
+          x = x.view(x.size(0), -1)
+          x = F.relu(self.fc1(x))
+          x = self.fc2(x)
+          return x
+  
+  
+  print("CNN model_1:")
+  model_1 = Net1()
+  print(model_1)
+  ```
+
+​	【方法二】
+
+- 使用`torch.nn.Sequential`
+
+  ```python
+  class Net2(nn.Module):
+      def __init__(self):
+          super(Net2, self).__init__()
+          self.conv = nn.Sequential(
+              nn.Conv2d(in_channels=3,
+                        out_channels=32,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1),
+              nn.ReLU(),
+              nn.MaxPool2d(kernel_size=2)
+          )
+  
+          self.fc = nn.Sequential(
+              nn.Linear(in_features=32 * 3 * 3,
+                        out_features=128),
+              nn.ReLU(),
+              nn.Linear(in_features=128,
+                        out_features=10)
+          )
+  
+      def forward(self, x):
+          conv_out = self.conv(x)
+          res = conv_out.view(conv_out.size(0), -1)
+          out = self.fc(res)
+          return out
+  
+  
+  print('CNN model_2:')
+  print(Net2())
+  ```
+
+【方法三】
+
+- 使用`torch.nn.Sequential`，传入有序字典；
+
+  特点：可以指定每一层的名称。
+
+  ```python
+  '''
+  使用字典OrderedDict形式
+  '''
+  class Net4(nn.Module):
+  
+      def __init__(self):
+          super(Net4, self).__init__()
+          self.conv = nn.Sequential(
+              OrderedDict(
+                  [
+                      ('conv1', nn.Conv2d(in_channels=3,
+                                          out_channels=32,
+                                          kernel_size=3,
+                                          stride=1,
+                                          padding=1)),
+                      ('relu1', nn.ReLU()),
+                      ('pool1', nn.MaxPool2d(kernel_size=2))
+  
+                  ]
+              )
+          )
+  
+          self.fc = nn.Sequential(
+              OrderedDict(
+                  [
+                      ('fc1', nn.Linear(in_features=32 * 3 * 3,
+                                        out_features=128)),
+  
+                      ('relu2', nn.ReLU()),
+  
+                      ('fc2', nn.Linear(in_features=128,
+                                        out_features=10))
+                  ]
+              )
+          )
+  
+      def forward(self, x):
+          conv_out = self.conv(x)
+          res = conv_out.view(conv_out.size(0), -1)
+          out = self.fc(res)
+          return out
+  
+  
+  print('CNN model_4:')
+  print(Net4())
+  
+  ```
+
+【方法四】
+
+- 使用`add_module`方法，添加一个子module.采用此方式也可以指定每一层的名称。
+
+- ```python
+  '''
+  通过 add_module()添加
+  '''
+  class Net3(nn.Module):
+      def __init__(self):
+          super(Net3, self).__init__()
+          self.conv = nn.Sequential()
+          self.conv.add_module(name='conv1',
+                               module=nn.Conv2d(in_channels=3,
+                                                out_channels=32,
+                                                kernel_size=1,
+                                                stride=1))
+          self.conv.add_module(name='relu1', module=nn.ReLU())
+          self.conv.add_module(name='pool1', module=nn.MaxPool2d(kernel_size=2))
+  
+          self.fc = nn.Sequential()
+          self.fc.add_module('fc1', module=nn.Linear(in_features=32 * 3 * 3,
+                                                     out_features=128))
+          self.fc.add_module('relu2', module=nn.ReLU())
+          self.fc.add_module('fc2', module=nn.Linear(in_features=128,
+                                                     out_features=10))
+  
+      def forward(self, x):
+          conv_out = self.conv(x)
+          res = conv_out.view(conv_out.size(0), -1)
+          out = self.fc(x)
+          return out
+  
+  
+  print('CNN model_3:')
+  print(Net3())
+  ```
+
+# 测试网络
+
+- 传入一个`Tensor`;(大小：1×3×6×6)
+
+  ```python
+  x = torch.randn(1, 3, 6, 6)
+  model = Net4()
+  out = model(x)
+  print(out)
+  ```
+
+  
+
+
+
+
+
+
+
+# HybridSN模型
+
+![HybridSN](E:/software/Typora/pictures/image-20220308172558816.png)
+
+- 【`3D-CNN`部分】
+
+  - Conv1: `(1,30,25,25)`, 8个`7×3×3`的卷积核 ==> `(8,24,23,23)`
+  
+    - 输入1个`30×25×25`的3D数据块，经过8个`7×3×3`的卷积核 ,输出8个`24×23×23`的特征；（stride=1，padding=0）
+  
+      ```python
+      # CNN计算
+      # 卷积层输入/输出关系：
+      # H = (H - F +2 * P) / S + 1   输入25--> 输出23
+      # W = (W - F +2 * P) / S + 1
+      # 同理，B = (B - F +2 * P) / S + 1    输入30 --> 输出24
+      ```
+      
+    
+  - Conv2: `(8,24,23,23)`, 16个`5×3×3`的卷积核 ==> `(16,20,21,21)`
+  
+    - 输入8个`24×23×23`的3D数据块，经过16个`5×3×3`的卷积核 ,输出16个`20×21×21`的特征；（stride=1，padding=0）
+  
+      ```python
+      # 输入23 --> 输出21
+      # 输入24 --> 输出20
+      ```
+  
+  - Conv3:  `(16,20,21,21)`, 32个`3×3×3`的卷积核 ==> `(32,18,19,19)`
+  
+    - 输入16个`20×21×21`的3D数据块，经过32个`3×3×3`的卷积核 ,输出32个`18×19×19`的特征；（stride=1，padding=0）
+  
+      ```python
+      # 输入21 --> 输出19
+      # 输入20 --> 输出18
+      ```
+  
+- 【`2D-CNN`部分】
+
+  - 需要将前面`3D-CNN`部分的输出结果作为此层的输入，所以需要将`3D-CNN`的输出结果`reshape`，得到`(32*18,19,19)`即`(576,19,19)`。
+  
+  - Conv4: `(576,19,19)`, 64个`3×3`的卷积核 ==> `(64,17,17)`
+  
+    - 输入576个`19×19`的2D数据，经过64个`3×3`的卷积核，输出64个`17×17`的特征；（stride=1，padding=0）
+  
+      ```python
+      # 输入19 --> 输出17
+      ```
+  
+- 【将2D-CNN输出结果进行`flatten`操作】64×17×17=18496维向量；
+
+- 【全连接层】都使用比例为0.4的`Dropout`。
+
+  - FC1: 输入`18496`,输出`256`;	(节点数256)
+  - FC2: 输入`256`,输出`128`;    (节点数128)
+  - FC3: 输入`128`,输出`n_classes`;    (节点数n_classes)
+  
+- 【网络模型】
+
+  ```python
+  # 自定义：数据集类别数
+  class_num = 16
+  class HybridSN(nn.Module):  
+    def __init__(self, in_channels=1, out_channels=class_num):
+      super(HybridSN, self).__init__()
+      self.conv3d_features = nn.Sequential(
+          nn.Conv3d(in_channels,out_channels=8,kernel_size=(7,3,3)),
+          nn.ReLU(),
+          nn.Conv3d(in_channels=8,out_channels=16,kernel_size=(5,3,3)),
+          nn.ReLU(),
+          nn.Conv3d(in_channels=16,out_channels=32,kernel_size=(3,3,3)),
+          nn.ReLU()
+      )
+  
+      self.conv2d_features = nn.Sequential(
+          nn.Conv2d(in_channels=32 * 18, out_channels=64, kernel_size=(3,3)),
+          nn.ReLU()
+      )
+  
+      self.classifier = nn.Sequential(
+          nn.Linear(64 * 17 * 17, 256),
+          nn.ReLU(),
+          nn.Dropout(p=0.4),
+          nn.Linear(256, 128),
+          nn.ReLU(),
+          nn.Dropout(p=0.4),
+          nn.Linear(128, 16)
+      )
+   
+    def forward(self, x):
+      x = self.conv3d_features(x)
+      x = x.view(x.size()[0],x.size()[1]*x.size()[2],x.size()[3],x.size()[4])
+      x = self.conv2d_features(x)
+      x = x.view(x.size()[0],-1)
+      x = self.classifier(x)
+      return x
+  
+  ```
+
+  【带有`Batch Normalization`的HybridSN模型】
+
+  ```python
+  class HybridSN_BN(nn.Module):  
+    def __init__(self, in_channels=1, out_channels=class_num):
+      super(HybridSN_BN, self).__init__()
+      self.conv3d_features = nn.Sequential(
+          nn.Conv3d(in_channels,out_channels=8,kernel_size=(7,3,3)),
+          nn.BatchNorm3d(8),
+          nn.ReLU(),
+          nn.Conv3d(in_channels=8,out_channels=16,kernel_size=(5,3,3)),
+          nn.BatchNorm3d(16),
+          nn.ReLU(),
+          nn.Conv3d(in_channels=16,out_channels=32,kernel_size=(3,3,3)),
+          nn.BatchNorm3d(32),
+          nn.ReLU()
+      )
+  
+      self.conv2d_features = nn.Sequential(
+          nn.Conv2d(in_channels=32 * 18, out_channels=64, kernel_size=(3,3)),
+          nn.BatchNorm2d(64),
+          nn.ReLU()
+      )
+  
+      self.classifier = nn.Sequential(
+          nn.Linear(64 * 17 * 17, 256),
+          nn.ReLU(),
+          nn.Dropout(p=0.4),
+          nn.Linear(256, 128),
+          nn.ReLU(),
+          nn.Dropout(p=0.4),
+          nn.Linear(128, 16)
+      )
+   
+    def forward(self, x):
+      x = self.conv3d_features(x)
+      x = x.view(x.size()[0],x.size()[1]*x.size()[2],x.size()[3],x.size()[4])
+      x = self.conv2d_features(x)
+      x = x.view(x.size()[0],-1)
+      x = self.classifier(x)
+      return x
+  
+  ```
+
+  
+
+  | 网络层      | 尺寸 | 参数 |
+  | ----------- | ---- | ---- |
+  | `input_1`   | （） | 0    |
+  | `Conv3d_1`  |      |      |
+  | `Conv3d_2`  |      |      |
+  | `Conv3d_3`  |      |      |
+  | `reshape_1` |      |      |
+  | `Conv2d_1`  |      |      |
+  | `flatten_1` |      |      |
+  | `dense_1`   |      |      |
+  | `dropout_1` |      |      |
+  | `dense_2`   |      |      |
+  | `dropout_2` |      |      |
+  | `dense_3`   |      |      |
+
+
+
+
+# 训练分类器
+
+## 【1】数据
+
+- 将需要处理的数据加载到`Numpy`数组，再将该**数组转换为张量**(torch.*Tensor)
+  - 对于图像，`Pillow`,`OpenCV`等包很有用；
+- 针对视觉处理，有`torchvision`包，其中包含用于常见数据集（例如 `Imagenet`，`CIFAR10`，`MNIST `等）的数据加载器，以及用于图像（即`torchvision.datasets`和`torch.utils.data.DataLoader`）的数据转换器。
+- 【例子】使用`CIFAR10`数据集；含10个类别，图像尺寸:`3×32×32`；
+
+## 【2】训练图像分类器
+
+- 【2.1】使用`torchvision`加载并标准化 `CIFAR10 `训练和测试数据集;
+- 【2.2】定义卷积神经网络；
+- 【2.3】定义损失函数；
+- 【2.4】根据训练数据训练网络；
+- 【2.5】在测试数据上测试网络；
+
+```python
+import torch
+import torchvision
+import torchvision.transforms as transforms
+# 【2.1】
+transform = transforms.Compose(
+    [transforms.ToTensor(),
+     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+
+trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                        download=True, transform=transform)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
+                                          shuffle=True, num_workers=2)
+
+testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                       download=True, transform=transform)
+testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+                                         shuffle=False, num_workers=2)
+
+classes = ('plane', 'car', 'bird', 'cat',
+           'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+```
+
+```python
+# 【2.2】
+import torch.nn as nn
+import torch.nn.functional as F
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+net = Net()
+
+```
+
+```python
+#【2.3】
+import torch.optim as optim
+
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+```
+
+```python
+# 【2.4】
+for epoch in range(2):  # loop over the dataset multiple times
+
+    running_loss = 0.0
+    for i, data in enumerate(trainloader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
+
+        # forward + backward + optimize
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        # print statistics
+        running_loss += loss.item()
+        if i % 2000 == 1999:    # print every 2000 mini-batches
+            print('[%d, %5d] loss: %.3f' %
+                  (epoch + 1, i + 1, running_loss / 2000))
+            running_loss = 0.0
+
+print('Finished Training')
+# 保存训练过的模型
+PATH = './cifar_net.pth'
+torch.save(net.state_dict(), PATH)
+```
+
+```python
+# 【2.5】
+net = Net()
+net.load_state_dict(torch.load(PATH))    # 重新加载保存的模型
+outputs = net(images)
+# 输出是 10 类的能量。 一个类别的能量越高，网络就认为该图像属于特定类别。 因此，让我们获取最高能量的指数：
+_, predicted = torch.max(outputs, 1)
+
+print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
+                              for j in range(4)))
+
+```
+
